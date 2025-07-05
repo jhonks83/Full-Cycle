@@ -1,4 +1,4 @@
-package br.com.primeshoes.api;
+package br.com.xvidros.api;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
