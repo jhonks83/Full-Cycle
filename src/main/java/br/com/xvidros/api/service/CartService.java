@@ -12,11 +12,13 @@ import br.com.xvidros.api.dtos.CartResponseDTO;
 import br.com.xvidros.api.entities.Cart;
 import br.com.xvidros.api.entities.CartItem;
 import br.com.xvidros.api.entities.Product;
+import br.com.xvidros.api.entities.ProductVariation;
 import br.com.xvidros.api.entities.User;
 import br.com.xvidros.api.mappers.CartMapper;
 import br.com.xvidros.api.repository.CartRepository;
 import br.com.xvidros.api.repository.CartItemRepository;
 import br.com.xvidros.api.repository.ProductRepository;
+import br.com.xvidros.api.repository.ProductVariationRepository;
 import br.com.xvidros.api.repository.UserRepository;
 
 @Service
@@ -36,6 +38,9 @@ public class CartService {
 
     @Autowired
     private CartMapper cartMapper;
+
+    @Autowired
+    private ProductVariationRepository productVariationRepository; // Dependência adicionada
 
     public CartResponseDTO getOrCreateCart(Long userId) {
         User user = userRepository.findById(userId)
@@ -58,27 +63,30 @@ public class CartService {
         Product product = productRepository.findById(cartItemCreateDTO.productId())
             .orElseThrow(() -> new RuntimeException("Produto não encontrado"));
 
-                Optional<CartItem> existingItem = cartItemRepository.findByCart(cart)
-            .stream()
-            .filter(item -> item.getProductVariation() != null && 
-                           item.getProductVariation().getProduct().getId() == product.getId())
-            .findFirst();
+        // Lógica corrigida para encontrar a variação do produto.
+        // O ideal seria o DTO especificar qual variação, mas aqui pegamos a primeira.
+        ProductVariation productVariation = productVariationRepository.findByProduct(product).stream().findFirst()
+            .orElseThrow(() -> new RuntimeException("Variação do produto não encontrada para o produto ID: " + product.getId()));
+
+        Optional<CartItem> existingItemOpt = cartItemRepository.findByCartAndProductVariation(cart, productVariation);
 
         CartItem cartItem;
-        if (existingItem.isPresent()) {
-                        cartItem = existingItem.get();
+        if (existingItemOpt.isPresent()) {
+            // Se o item já existe, atualiza a quantidade e o subtotal
+            cartItem = existingItemOpt.get();
             cartItem.setQuantity(cartItem.getQuantity() + cartItemCreateDTO.quantity());
-            cartItem.setSubtotal(cartItem.getQuantity() * product.getPrice());
+            cartItem.setSubtotal(productVariation.getPrice() * cartItem.getQuantity());
         } else {
-                        cartItem = new CartItem();
+            // Se for um item novo, cria e define todos os campos
+            cartItem = new CartItem();
             cartItem.setCart(cart);
+            cartItem.setProductVariation(productVariation); // Campo importante que faltava
             cartItem.setQuantity(cartItemCreateDTO.quantity());
-            cartItem.setSubtotal(product.getPrice() * cartItemCreateDTO.quantity());
-            
+            cartItem.setSubtotal(productVariation.getPrice() * cartItemCreateDTO.quantity());
         }
 
         cartItemRepository.save(cartItem);
-        
+
         List<CartItem> cartItems = cartItemRepository.findByCart(cart);
         return cartMapper.toResponseDTO(cart, cartItems);
     }
@@ -96,8 +104,8 @@ public class CartService {
             cartItemRepository.delete(cartItem);
         } else {
             cartItem.setQuantity(quantity);
-                        if (cartItem.getProductVariation() != null) {
-                Float productPrice = cartItem.getProductVariation().getProduct().getPrice();
+            if (cartItem.getProductVariation() != null) {
+                Float productPrice = cartItem.getProductVariation().getPrice();
                 cartItem.setSubtotal(productPrice * quantity);
             }
             cartItemRepository.save(cartItem);
@@ -141,4 +149,3 @@ public class CartService {
             });
     }
 }
-

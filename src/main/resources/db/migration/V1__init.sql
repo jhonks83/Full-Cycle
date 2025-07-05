@@ -1,79 +1,79 @@
--- Migration única para inicializar todo o schema - 2025-07-03
-
--- Tabela de usuários
-CREATE TABLE users (
+-- Tabela de Usuários
+CREATE TABLE tb_user (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
-    name VARCHAR(100) NOT NULL,
-    email VARCHAR(100) NOT NULL UNIQUE,
+    name VARCHAR(255) NOT NULL,
+    email VARCHAR(255) NOT NULL UNIQUE,
     password VARCHAR(255) NOT NULL,
-    role ENUM('ADMIN', 'CUSTOMER') DEFAULT 'CUSTOMER',
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+    role VARCHAR(50) NOT NULL
 );
 
--- Tabela de produtos
-CREATE TABLE products (
+-- Tabela de Categorias de Produto
+CREATE TABLE tb_category (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
-    name VARCHAR(255),
-    description TEXT,
-    category VARCHAR(255),
-    brand VARCHAR(255), -- 👈 importante
-    price FLOAT,
-    rating FLOAT,
-    image_url VARCHAR(255),
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+    name VARCHAR(255) NOT NULL
 );
 
--- Variações de produto
-CREATE TABLE product_variations (
+-- Tabela de Produtos
+CREATE TABLE tb_product (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    description TEXT,
+    active BOOLEAN DEFAULT TRUE,
+    category_id BIGINT,
+    created_at TIMESTAMP,
+    updated_at TIMESTAMP,
+    FOREIGN KEY (category_id) REFERENCES tb_category(id)
+);
+
+-- Tabela de Variações de Produto
+CREATE TABLE tb_product_variation (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
     product_id BIGINT NOT NULL,
-    size VARCHAR(10) NOT NULL,
-    color VARCHAR(30) NOT NULL,
-    stock INT NOT NULL DEFAULT 0,
-    FOREIGN KEY (product_id) REFERENCES products(id)
+    size VARCHAR(100),
+    color VARCHAR(100),
+    price FLOAT,
+    quantity INT,
+    sku VARCHAR(255) UNIQUE,
+    FOREIGN KEY (product_id) REFERENCES tb_product(id)
 );
 
--- Tabela de carrinhos
-CREATE TABLE carts (
+-- Tabela de Carrinho de Compras
+CREATE TABLE tb_cart (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
     user_id BIGINT NOT NULL,
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    FOREIGN KEY (user_id) REFERENCES users(id)
+    FOREIGN KEY (user_id) REFERENCES tb_user(id)
 );
 
--- Itens do carrinho
-CREATE TABLE cart_items (
+-- Tabela de Itens do Carrinho
+CREATE TABLE tb_cart_item (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
     cart_id BIGINT NOT NULL,
     product_variation_id BIGINT NOT NULL,
-    quantity INT NOT NULL,
-    subtotal FLOAT NOT NULL,
-    FOREIGN KEY (cart_id) REFERENCES carts(id),
-    FOREIGN KEY (product_variation_id) REFERENCES product_variations(id)
+    quantity INT,
+    subtotal FLOAT,
+    FOREIGN KEY (cart_id) REFERENCES tb_cart(id),
+    FOREIGN KEY (product_variation_id) REFERENCES tb_product_variation(id)
 );
 
--- Tabela de pedidos
-CREATE TABLE orders (
+-- Tabela de Pedidos
+CREATE TABLE tb_order (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
     user_id BIGINT NOT NULL,
-    total_price FLOAT NOT NULL,
-    status ENUM('PENDING', 'PAID', 'SHIPPED', 'DELIVERED', 'CANCELLED') DEFAULT 'PENDING',
-    tracking_code VARCHAR(50),
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    FOREIGN KEY (user_id) REFERENCES users(id)
+    total_price FLOAT,
+    status ENUM('PENDING', 'PAID', 'SHIPPED', 'DELIVERED', 'CANCELLED'), -- Status corrigidos
+    tracking_code VARCHAR(255),
+    created_at TIMESTAMP,
+    updated_at TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES tb_user(id)
 );
 
--- Itens do pedido
-CREATE TABLE order_items (
+-- Tabela de Itens do Pedido
+CREATE TABLE tb_order_item (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
     order_id BIGINT NOT NULL,
     product_variation_id BIGINT NOT NULL,
-    quantity INT NOT NULL,
-    price FLOAT NOT NULL,
-    FOREIGN KEY (order_id) REFERENCES orders(id),
-    FOREIGN KEY (product_variation_id) REFERENCES product_variations(id)
+    quantity INT,
+    price FLOAT,
+    FOREIGN KEY (order_id) REFERENCES tb_order(id),
+    FOREIGN KEY (product_variation_id) REFERENCES tb_product_variation(id)
 );

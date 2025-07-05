@@ -1,7 +1,6 @@
 package br.com.xvidros.api.service;
 
-import java.sql.Date;
-import java.time.LocalDate;
+import java.time.LocalDateTime; 
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -11,7 +10,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import br.com.xvidros.api.dtos.OrderCreateDTO;
-import br.com.xvidros.api.dtos.OrderItemResponseDTO;
 import br.com.xvidros.api.dtos.OrderResponseDTO;
 import br.com.xvidros.api.entities.Cart;
 import br.com.xvidros.api.entities.CartItem;
@@ -19,7 +17,6 @@ import br.com.xvidros.api.entities.Order;
 import br.com.xvidros.api.entities.OrderItem;
 import br.com.xvidros.api.entities.User;
 import br.com.xvidros.api.enuns.OrderStatus;
-import br.com.xvidros.api.mappers.OrderItemMapper;
 import br.com.xvidros.api.mappers.OrderMapper;
 import br.com.xvidros.api.repository.CartItemRepository;
 import br.com.xvidros.api.repository.CartRepository;
@@ -49,9 +46,6 @@ public class OrderService {
     private OrderMapper orderMapper;
 
     @Autowired
-    private OrderItemMapper orderItemMapper;
-
-    @Autowired
     private CartService cartService;
 
     @Transactional
@@ -76,8 +70,9 @@ public class OrderService {
         order.setTotalPrice(totalPrice);
         order.setStatus(OrderStatus.PENDING);
         order.setTrackingCode(generateTrackingCode());
-        order.setCreated_at(Date.valueOf(LocalDate.now()));
-        order.setUpdated_at(Date.valueOf(LocalDate.now()));
+        // ***** CORREÇÃO APLICADA AQUI *****
+        order.setCreatedAt(LocalDateTime.now());
+        order.setUpdatedAt(LocalDateTime.now());
 
         Order savedOrder = orderRepository.save(order);
 
@@ -87,44 +82,31 @@ public class OrderService {
                 orderItem.setOrder(savedOrder);
                 orderItem.setProductVariation(cartItem.getProductVariation());
                 orderItem.setQuantity(cartItem.getQuantity());
-                orderItem.setPrice(cartItem.getSubtotal());
+                orderItem.setPrice(cartItem.getProductVariation().getPrice());
                 return orderItem;
             })
             .collect(Collectors.toList());
 
         orderItemRepository.saveAll(orderItems);
-
         cartService.clearCart(user.getId());
 
-        List<OrderItemResponseDTO> orderItemDTOs = orderItems.stream()
-            .map(orderItemMapper::toResponseDTO)
-            .collect(Collectors.toList());
-
-        return orderMapper.toResponseDTO(savedOrder, orderItemDTOs);
+        return orderMapper.toResponseDTO(savedOrder, orderItems);
     }
 
     public List<OrderResponseDTO> getAllOrders() {
-        return orderRepository.findAll()
-            .stream()
+        return orderRepository.findAll().stream()
             .map(order -> {
-                List<OrderItemResponseDTO> orderItems = orderItemRepository.findByOrder(order)
-                    .stream()
-                    .map(orderItemMapper::toResponseDTO)
-                    .collect(Collectors.toList());
-                return orderMapper.toResponseDTO(order, orderItems);
+                List<OrderItem> items = orderItemRepository.findByOrder(order);
+                return orderMapper.toResponseDTO(order, items);
             })
             .collect(Collectors.toList());
     }
 
     public List<OrderResponseDTO> getOrdersByUser(Long userId) {
-        return orderRepository.findByUserId(userId)
-            .stream()
+        return orderRepository.findByUserId(userId).stream()
             .map(order -> {
-                List<OrderItemResponseDTO> orderItems = orderItemRepository.findByOrder(order)
-                    .stream()
-                    .map(orderItemMapper::toResponseDTO)
-                    .collect(Collectors.toList());
-                return orderMapper.toResponseDTO(order, orderItems);
+                List<OrderItem> items = orderItemRepository.findByOrder(order);
+                return orderMapper.toResponseDTO(order, items);
             })
             .collect(Collectors.toList());
     }
@@ -132,13 +114,8 @@ public class OrderService {
     public OrderResponseDTO getOrderById(Long id) {
         Order order = orderRepository.findById(id)
             .orElseThrow(() -> new RuntimeException("Pedido não encontrado"));
-
-        List<OrderItemResponseDTO> orderItems = orderItemRepository.findByOrder(order)
-            .stream()
-            .map(orderItemMapper::toResponseDTO)
-            .collect(Collectors.toList());
-
-        return orderMapper.toResponseDTO(order, orderItems);
+        List<OrderItem> items = orderItemRepository.findByOrder(order);
+        return orderMapper.toResponseDTO(order, items);
     }
 
     @Transactional
@@ -147,15 +124,11 @@ public class OrderService {
             .orElseThrow(() -> new RuntimeException("Pedido não encontrado"));
 
         order.setStatus(status);
-        order.setUpdated_at(Date.valueOf(LocalDate.now()));
+        order.setUpdatedAt(LocalDateTime.now());
 
         Order updatedOrder = orderRepository.save(order);
 
-        List<OrderItemResponseDTO> orderItems = orderItemRepository.findByOrder(updatedOrder)
-            .stream()
-            .map(orderItemMapper::toResponseDTO)
-            .collect(Collectors.toList());
-
+        List<OrderItem> orderItems = orderItemRepository.findByOrder(updatedOrder);
         return orderMapper.toResponseDTO(updatedOrder, orderItems);
     }
 

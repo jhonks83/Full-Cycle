@@ -1,8 +1,13 @@
 package br.com.xvidros.api.entities;
 
-import java.sql.Date;
+import java.io.Serializable;
+import java.time.LocalDateTime; 
+import java.util.List;
+import java.util.Objects;
 
 import br.com.xvidros.api.enuns.OrderStatus;
+import jakarta.persistence.CascadeType;
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
@@ -11,96 +16,123 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 
 @Entity
-@Table(name = "orders")
-public class Order {
+@Table(name = "tb_order")
+public class Order implements Serializable {
+    private static final long serialVersionUID = 1L;
 
-	@Id
-	@GeneratedValue(strategy = GenerationType.IDENTITY)
-	private long id;
-	
-	@ManyToOne
-	@JoinColumn(name = "user_id")
-	private User user;
-	
-	private float totalPrice;
-	
-	@Enumerated(EnumType.STRING)
-	private OrderStatus status;
-	
-	private String trackingCode;
-	private Date created_at;
-	private Date updated_at;
-	
-	public Order() {}
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
 
-	public Order(long id, User user, float totalPrice, OrderStatus status, String trackingCode, Date created_at,
-			Date updated_at) {
-		super();
-		this.id = id;
-		this.user = user;
-		this.totalPrice = totalPrice;
-		this.status = status;
-		this.trackingCode = trackingCode;
-		this.created_at = created_at;
-		this.updated_at = updated_at;
-	}
+    @ManyToOne
+    @JoinColumn(name = "user_id", nullable = false)
+    private User user;
 
-	public long getId() {
-		return id;
-	}
+    @Column(name = "total_price")
+    private Float totalPrice;
 
-	public void setId(long id) {
-		this.id = id;
-	}
+    @Enumerated(EnumType.STRING)
+    private OrderStatus status;
 
-	public User getUser() {
-		return user;
-	}
+    @Column(name = "tracking_code")
+    private String trackingCode;
 
-	public void setUser(User user) {
-		this.user = user;
-	}
+        @Column(name = "created_at")
+    private LocalDateTime createdAt; 
 
-	public float getTotalPrice() {
-		return totalPrice;
-	}
+        @Column(name = "updated_at")
+    private LocalDateTime updatedAt;
 
-	public void setTotalPrice(float totalPrice) {
-		this.totalPrice = totalPrice;
-	}
+    @OneToMany(mappedBy = "order", cascade = CascadeType.ALL)
+    private List<OrderItem> items;
 
-	public OrderStatus getStatus() {
-		return status;
-	}
 
-	public void setStatus(OrderStatus status) {
-		this.status = status;
-	}
+    
+    public Order() {
+    }
 
-	public String getTrackingCode() {
-		return trackingCode;
-	}
+    // Getters e Setters
 
-	public void setTrackingCode(String trackingCode) {
-		this.trackingCode = trackingCode;
-	}
+    public Long getId() {
+        return id;
+    }
 
-	public Date getCreated_at() {
-		return created_at;
-	}
+    public void setId(Long id) {
+        this.id = id;
+    }
 
-	public void setCreated_at(Date created_at) {
-		this.created_at = created_at;
-	}
+    public User getUser() {
+        return user;
+    }
 
-	public Date getUpdated_at() {
-		return updated_at;
-	}
+    public void setUser(User user) {
+        this.user = user;
+    }
 
-	public void setUpdated_at(Date updated_at) {
-		this.updated_at = updated_at;
-	}
+    public Float getTotalPrice() {
+        return totalPrice;
+    }
+
+    public void setTotalPrice(Float totalPrice) {
+        this.totalPrice = totalPrice;
+    }
+
+    public OrderStatus getStatus() {
+        return status;
+    }
+
+    public void setStatus(OrderStatus status) {
+        this.status = status;
+    }
+
+    public String getTrackingCode() {
+        return trackingCode;
+    }
+
+    public void setTrackingCode(String trackingCode) {
+        this.trackingCode = trackingCode;
+    }
+
+    // Getters e Setters Corrigidos para LocalDateTime
+    public LocalDateTime getCreatedAt() {
+        return createdAt;
+    }
+
+    public void setCreatedAt(LocalDateTime createdAt) {
+        this.createdAt = createdAt;
+    }
+
+    public LocalDateTime getUpdatedAt() {
+        return updatedAt;
+    }
+
+    public void setUpdatedAt(LocalDateTime updatedAt) {
+        this.updatedAt = updatedAt;
+    }
+
+    public List<OrderItem> getItems() {
+        return items;
+    }
+
+    public void setItems(List<OrderItem> items) {
+        this.items = items;
+    }
+
+        @Override
+    public int hashCode() {
+        return Objects.hash(id);
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) return true;
+        if (obj == null) return false;
+        if (getClass() != obj.getClass()) return false;
+        Order other = (Order) obj;
+        return Objects.equals(id, other.id);
+    }
 }

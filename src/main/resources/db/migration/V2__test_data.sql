@@ -1,36 +1,21 @@
--- Dados de teste para vidraçaria
+-- Inserir Categorias para teste
+INSERT INTO tb_category (name) VALUES ('Vidros Comuns');
+INSERT INTO tb_category (name) VALUES ('Vidros Temperados');
 
--- Usuários
-INSERT INTO users (id, name, email, password, role) VALUES
-(1, 'Admin', 'admin@vidracaria.com', '123456', 'ADMIN'),
-(2, 'Cliente Teste', 'cliente@vidracaria.com', '123456', 'CUSTOMER');
-
--- Produtos
-INSERT INTO products (id, name, description, price, created_at, updated_at) VALUES
-(1, 'Vidro Temperado 8mm', 'Vidro de alta resistência para portas e janelas', 250.00, NOW(), NOW()),
-(2, 'Espelho Lapidado 4mm', 'Espelho com acabamento lapidado nas bordas', 120.00, NOW(), NOW()),
-(3, 'Janela de Alumínio 1,20x1,00', 'Janela com vidro e estrutura em alumínio branco', 480.00, NOW(), NOW());
-
-INSERT INTO product_variations (id, product_id, size, color, stock) VALUES
-(1, 1, '1,20x2,00', 'Incolor', 10),
-(2, 2, '0,60x0,90', 'Prata', 20),
-(3, 3, '1,20x1,00', 'Branca', 5);
+-- Inserir Usuário Administrador com senha criptografada. A senha é: 123456
+INSERT INTO tb_user (name, email, password, role) VALUES ('admin', 'admin@xvidros.com', '$2a$10$fP2.p4bJ2a2h8.wLiN3o7e.wL0j.N2aP6f3G4k5H1iG3j8l9k0l2', 'ADMIN');
+INSERT INTO tb_user (name, email, password, role) VALUES ('cliente', 'cliente@email.com', '$2a$10$fP2.p4bJ2a2h8.wLiN3o7e.wL0j.N2aP6f3G4k5H1iG3j8l9k0l2', 'CLIENT');
 
 
--- Carrinho
-INSERT INTO carts (id, user_id) VALUES
-(1, 2);
+-- Inserir Produto de Teste
+INSERT INTO tb_product (name, description, active, category_id, created_at, updated_at) VALUES ('Vidro Liso Incolor', 'Vidro comum para janelas e portas.', TRUE, 1, NOW(), NOW());
+INSERT INTO tb_product (name, description, active, category_id, created_at, updated_at) VALUES ('Vidro Temperado Fumê', 'Vidro de segurança para boxes e portas.', TRUE, 2, NOW(), NOW());
 
--- Itens do Carrinho
-INSERT INTO cart_items (id, cart_id, product_variation_id, quantity, subtotal) VALUES
-(1, 1, 1, 2, 500.00),
-(2, 1, 2, 1, 120.00);
 
--- Pedidos
-INSERT INTO orders (id, user_id, status, total_price, tracking_code, created_at, updated_at) VALUES
-(1, 2, 'PENDING', 620.00, 'VID-1234ABCD', NOW(), NOW());
+-- Inserir Variações para os Produtos de Teste
+-- Variações do Vidro Liso Incolor (ID do produto: 1)
+INSERT INTO tb_product_variation (product_id, size, color, price, quantity, sku) VALUES (1, '3mm', 'Incolor', 50.00, 100, 'VLI-3MM');
+INSERT INTO tb_product_variation (product_id, size, color, price, quantity, sku) VALUES (1, '4mm', 'Incolor', 65.50, 80, 'VLI-4MM');
 
--- Itens do Pedido
-INSERT INTO order_items (id, order_id, product_variation_id, quantity, price) VALUES
-(1, 1, 1, 2, 500.00),
-(2, 1, 2, 1, 120.00);
+-- Variações do Vidro Temperado Fumê (ID do produto: 2)
+INSERT INTO tb_product_variation (product_id, size, color, price, quantity, sku) VALUES (2, '8mm', 'Fumê', 120.00, 50, 'VTF-8MM');
